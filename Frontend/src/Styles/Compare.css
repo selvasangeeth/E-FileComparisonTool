@@ -1,0 +1,87 @@
+.container {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  margin-top: 2rem;
+  font-size: 1.25rem;
+}
+
+h4 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.form input[type="file"],
+.form input[type="text"],
+.form input[type="email"],
+.form input[type="password"] {
+  display: block;
+  margin: 0.5rem 0;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  border: none;
+  margin-top: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.result {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+}
+
+.result table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.result th,
+.result td {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.result th {
+  background-color: #f1f5f9;
+}
+
+.error {
+  color: red;
+  margin-top: 0.5rem;
+}
+
+.efile-section {
+  margin-top: 1rem;
+}
+
+.efile-global-button {
+  margin-top: 2rem;
+  text-align: center;
+}
