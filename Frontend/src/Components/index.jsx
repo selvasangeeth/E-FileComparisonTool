@@ -15,6 +15,8 @@ const Index = () => {
   const [efileCompared, setEfileCompared] = useState(false);
   const [Comapring, setComparing] = useState(false);
   const [efileComapring, setEfileComparing] = useState(false);
+  const [noCsvAppMismatches, setNoCsvAppMismatches] = useState(false);
+
 
   const handleGenerateJWT = async () => {
     if (!email || !password) {
@@ -60,13 +62,27 @@ const Index = () => {
     setComparing(true);
 
     try {
+      // console.log(token, appOrderId)
       const res = await axios.post("/compare/csv-json", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      // console.log("CSV vs Application JSON Results:", res.data.mismatches);
+      // console.log("CSV vs Application JSON Results:", res.data);
+
+      if (res.data.msg === "No mismatches found") {
+        alert("No mismatches found in CSV vs Application JSON comparison");
+        setCsvVsAppResult([]);
+        setAppVsEfileResults([]);
+        setEfileCompared(false);
+        setNoCsvAppMismatches(true);
+        setComparing(false);
+        return;
+      }
+
+
       setCsvVsAppResult(res.data.mismatches || []);
       setAppVsEfileResults([]);
       setEfileCompared(false);
+      setNoCsvAppMismatches(false);
       setComparing(false);
     } catch (err) {
       alert("Comparison with Application JSON failed");
@@ -75,24 +91,30 @@ const Index = () => {
   };
 
   const handleCompareAllEfile = async () => {
-    const returnIds = csvVsAppResult
-      .map((item) => item.returnId)
-      .filter((id) => !!id);
 
-    if (!token || !appOrderId || returnIds.length === 0) {
-      alert("Missing token, App Order ID, or return IDs");
+    // console.log(token, appOrderId, returnIds);
+    if (!token || !appOrderId) {
+      alert("Missing token, App Order ID");
       return;
     }
     setEfileComparing(true);
 
     try {
+      // console.log(token, appOrderId, returnIds);
       const res = await axios.post("/compare/appjson-efilejson", {
         token,
         appOrderId,
-        returnIds,
       });
 
-      // console.log("E-File JSON Comparison Results:", res.data.mismatches);
+
+      // console.log("E-File JSON Comparison Results:", res.data);
+      if (res.data.msg === "No mismatches found") {
+        alert("No mismatches found in Application JSON vs E-File JSON comparison");
+        setAppVsEfileResults([]);
+        setEfileCompared(true);
+        setEfileComparing(false);
+        return;
+      }
       setAppVsEfileResults(res.data.mismatches || []);
       setEfileCompared(true);
       setEfileComparing(false);
@@ -113,11 +135,14 @@ const Index = () => {
           rowNumber: item.rowNumber,
           msg: item.msg || "",
           row: item.row || "",
+          jsonData: item.jsonData || {},
         });
       }
       map.get(item.returnId).csvApp = item.issues || [];
       map.get(item.returnId).rowNumber = item.rowNumber;
       map.get(item.returnId).msg = item.msg || "";
+      map.get(item.returnId).jsonData = item.jsonData || {}; 
+      
     });
 
     appVsEfileResults.forEach((item) => {
@@ -127,9 +152,11 @@ const Index = () => {
           appEfile: [],
           rowNumber: null,
           msg: "",
+          jsonData: item.jsonData || {},
         });
       }
       map.get(item.returnId).appEfile = (item.issues || []).flat();
+      map.get(item.returnId).jsonData = item.jsonData || map.get(item.returnId).jsonData || {};
     });
 
     return Array.from(map.entries()).map(([returnId, data]) => ({
@@ -139,6 +166,8 @@ const Index = () => {
       appEfileIssues: data.appEfile,
       msg: data.msg,
       row: data.row || {},
+      jsonData:data.jsonData|| {},
+
     }));
   };
 
@@ -190,22 +219,29 @@ const Index = () => {
         <button type="submit">{Comapring ? "Comparing..." : "Compare Csv vs Application JSON"}</button>
       </form>
 
-      {csvVsAppResult.length > 0 && (
-        <button style={{ marginTop: "20px" }} onClick={handleCompareAllEfile}>
+      {(csvVsAppResult.length > 0 || noCsvAppMismatches) && (
+        <button onClick={handleCompareAllEfile}>
           {efileComapring ? "Comparing..." : "Compare Application JSON with E-File JSON"}
         </button>
       )}
 
+
       <h3>Comparison Results</h3>
-      {combinedResults().length === 0 ? (
+      {efileCompared && appVsEfileResults.length === 0 && (
+        <p>No mismatches found in Application JSON vs E-File JSON comparison</p>
+      )}
+
+      {csvVsAppResult.length === 0 && noCsvAppMismatches && !efileCompared ? (
+        <p>No mismatches found in CSV vs Application JSON comparison.</p>
+      ) : csvVsAppResult.length === 0 && !efileCompared ? (
         <p>Not yet Compared</p>
       ) : (
-        combinedResults().map(({ returnId, rowNumber, csvAppIssues, appEfileIssues, msg, row }, i) => {
-          const recipientTinType = row?.["Recipient type of TIN (1=EIN 2=SSN 3=ITIN 4=ATIN 5=TIN not provided)*"];
+        combinedResults().map(({ returnId, rowNumber, csvAppIssues, appEfileIssues, msg, row,jsonData }, i) => {
+          const recipientTinType = jsonData.tintype;
           const recipientName =
-            recipientTinType === "2" || recipientTinType === "3" || recipientTinType === "4"
-              ? `${row?.["Recipient first name (if the recipient TIN is SSN, ATIN or ITIN)*"] || ""} ${row?.["Recipient last name (if the recipient TIN is SSN, ATIN or ITIN)*"] || ""}`.trim()
-              : row?.["Recipient name (if the recipient TIN is EIN or TIN not provided)*"] || "";
+            recipientTinType === "SSN" || recipientTinType === "ATIN" || recipientTinType === "ITIN"
+              ? `${jsonData.firstNm|| ""} ${jsonData.middleNm || ""} ${jsonData.lastNm}`.trim()
+              : jsonData.businessNm || "";
 
           return (
             <div key={`combined-${returnId}-${i}`} className="result" style={{ marginBottom: "2rem" }}>

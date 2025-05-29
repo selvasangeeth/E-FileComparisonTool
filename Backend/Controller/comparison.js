@@ -5,6 +5,8 @@ const headers = require("../Controller/Constants/form1099NECconstants");
 const { compareBusinessWithJson } = require("../Controller/BussinessVerification/bussinessVerification1099");
 const { compareJsonToJson } = require("../Controller/FormComparison/efileComparison");
 const { compareApplicationBusinessWithJson } = require("../Controller/BussinessVerification/efileBussinessVerification");
+const { json } = require("stream/consumers");
+
 const getReturnIds = async (appOrderId, token) => {
   const response = await axios.post(
     "https://tbs-gatewayapi.stssprint.com/FormW21099Dashboard/GetReturnIdsUsingAppOrderId",
@@ -92,6 +94,7 @@ const compareCsvWithApi = async (req, res) => {
         mismatches.push({
           rowNumber: i + 1,
           row,
+          jsonData: jsonData.returndata.recipient,
           issue: "Recipient TIN is missing but other identifying recipient fields are present",
         });
         continue;
@@ -106,6 +109,7 @@ const compareCsvWithApi = async (req, res) => {
           rowNumber: i + 1,
           row,
           issue: "",
+          jsonData: jsonData.returndata.recipient,
           msg: "No matching ReturnId found or Not Available in Application JSON"
         });
         continue;
@@ -121,12 +125,16 @@ const compareCsvWithApi = async (req, res) => {
         mismatches.push({
           returnId: matchedReturn.returnId,
           rowNumber: i + 1,
-          row,
+          jsonData: jsonData.returndata.recipient,
           issues,
         });
       }
     }
 
+    // console.log("Comparison completed. Mismatches found:", mismatches.length);
+    if (mismatches.length === 0) {
+      return res.json({ success: true, msg: "No mismatches found" });
+    }
     res.json({ success: true, mismatches });
   } catch (err) {
     console.error("Comparison Error:", err);
@@ -166,7 +174,8 @@ const compareApplicationWithEFile = async (req, res) => {
           returnId,
           issues,
           row: "",
-          msg: "No matching ReturnId found in Efile return details"
+          msg: "No matching ReturnId found in Efile return details",
+          jsonData: applicationJson.returndata.recipient,
         });
       }
       // console.log("returnId", returnId);
@@ -189,12 +198,16 @@ const compareApplicationWithEFile = async (req, res) => {
         mismatches.push({
           returnId,
           issues,
-          row: efileAppJson,
+          jsonData: applicationJson.returndata.recipient
         });
       }
     }
 
     console.log("reached end.....................");
+    // console.log("Comparison completed. Mismatches found:", mismatches.length);
+    if (mismatches.length === 0) {
+      return res.json({ success: true, msg: "No mismatches found" });
+    }
     res.json({ success: true, mismatches });
   } catch (error) {
     console.error("Error in compareApplicationWithEFile:", error);
