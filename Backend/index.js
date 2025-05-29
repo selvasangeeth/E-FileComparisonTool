@@ -1,17 +1,21 @@
 const express = require('express');
 const app = express();
-const cors = require('cors');
 const comparisonRoutes = require('./Routes/comparison');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 app.use(express.json());
 
+dotenv.config();
+const PORT = process.env.PORT;
+const ORIGIN_URL = process.env.ORIGIN_URL;
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend port
-  methods: ['POST', 'GET'],
+  origin: ORIGIN_URL,
   credentials: true
 }));
 
 app.use('/', comparisonRoutes);
-app.listen(5000, () => {
-  console.log('Server is running on port 5000');
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

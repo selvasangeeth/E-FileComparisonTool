@@ -12,7 +12,9 @@ const Index = () => {
   const [csvVsAppResult, setCsvVsAppResult] = useState([]);
   const [appVsEfileResults, setAppVsEfileResults] = useState([]);
   const [jwtLoading, setJwtLoading] = useState(false);
-  const [efileCompared, setEfileCompared] = useState(false); 
+  const [efileCompared, setEfileCompared] = useState(false);
+  const [Comapring, setComparing] = useState(false);
+  const [efileComapring, setEfileComparing] = useState(false);
 
   const handleGenerateJWT = async () => {
     if (!email || !password) {
@@ -33,7 +35,7 @@ const Index = () => {
       });
       if (res.data?.JwtToken) {
         setToken(res.data.JwtToken);
-        alert("JWT generated successfully");
+        alert("JWT generated successfully!");
       } else {
         alert("JWT not returned by API");
       }
@@ -55,15 +57,17 @@ const Index = () => {
     formData.append("csvFile", file);
     formData.append("token", token);
     formData.append("appOrderId", appOrderId);
+    setComparing(true);
 
     try {
       const res = await axios.post("/compare/csv-json", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log("CSV vs Application JSON Results:", res.data.mismatches);
+      // console.log("CSV vs Application JSON Results:", res.data.mismatches);
       setCsvVsAppResult(res.data.mismatches || []);
       setAppVsEfileResults([]);
       setEfileCompared(false);
+      setComparing(false);
     } catch (err) {
       alert("Comparison with Application JSON failed");
       console.error(err);
@@ -79,6 +83,7 @@ const Index = () => {
       alert("Missing token, App Order ID, or return IDs");
       return;
     }
+    setEfileComparing(true);
 
     try {
       const res = await axios.post("/compare/appjson-efilejson", {
@@ -87,9 +92,10 @@ const Index = () => {
         returnIds,
       });
 
-      console.log("E-File JSON Comparison Results:", res.data.mismatches);
+      // console.log("E-File JSON Comparison Results:", res.data.mismatches);
       setAppVsEfileResults(res.data.mismatches || []);
-      setEfileCompared(true); 
+      setEfileCompared(true);
+      setEfileComparing(false);
     } catch (err) {
       alert("Failed to compare Application JSON with E-File JSON");
       console.error(err);
@@ -106,6 +112,7 @@ const Index = () => {
           appEfile: [],
           rowNumber: item.rowNumber,
           msg: item.msg || "",
+          row: item.row || "",
         });
       }
       map.get(item.returnId).csvApp = item.issues || [];
@@ -131,6 +138,7 @@ const Index = () => {
       csvAppIssues: data.csvApp,
       appEfileIssues: data.appEfile,
       msg: data.msg,
+      row: data.row || {},
     }));
   };
 
@@ -138,7 +146,6 @@ const Index = () => {
     <div className="container">
       <h2>E-File Comparison Tool</h2>
 
-      
       <div className="form" style={{ marginBottom: "1rem" }}>
         <input
           type="email"
@@ -157,7 +164,6 @@ const Index = () => {
         </button>
       </div>
 
-     
       <form onSubmit={handleSubmit} className="form">
         <input
           type="file"
@@ -165,14 +171,14 @@ const Index = () => {
           onChange={(e) => setFile(e.target.files[0])}
           required
         />
-        <p><strong>JWT TOKEN</strong></p>
+        {/* <p><strong>JWT TOKEN</strong></p>
         <input
           type="text"
           placeholder="Bearer Token"
           value={token}
           onChange={(e) => setToken(e.target.value)}
           required
-        />
+        /> */}
         <p><strong>APP ORDER ID</strong></p>
         <input
           type="text"
@@ -181,85 +187,90 @@ const Index = () => {
           onChange={(e) => setAppOrderId(e.target.value)}
           required
         />
-        <button type="submit">Compare CSV vs Application JSON</button>
+        <button type="submit">{Comapring ? "Comparing..." : "Compare Csv vs Application JSON"}</button>
       </form>
 
-     
       {csvVsAppResult.length > 0 && (
         <button style={{ marginTop: "20px" }} onClick={handleCompareAllEfile}>
-          Compare Application JSON vs E-File JSON
+          {efileComapring ? "Comparing..." : "Compare Application JSON with E-File JSON"}
         </button>
       )}
 
-     
       <h3>Comparison Results</h3>
       {combinedResults().length === 0 ? (
-        <p>No comparison data yet.</p>
+        <p>Not yet Compared</p>
       ) : (
-        combinedResults().map(({ returnId, rowNumber, csvAppIssues, appEfileIssues, msg }, i) => (
-          <div key={`combined-${returnId}-${i}`} className="result" style={{ marginBottom: "2rem" }}>
-            {rowNumber !== null && <p><strong>Row Number:</strong> {rowNumber}</p>}
-            <p><strong>Return ID:</strong> {returnId}</p>
+        combinedResults().map(({ returnId, rowNumber, csvAppIssues, appEfileIssues, msg, row }, i) => {
+          const recipientTinType = row?.["Recipient type of TIN (1=EIN 2=SSN 3=ITIN 4=ATIN 5=TIN not provided)*"];
+          const recipientName =
+            recipientTinType === "2" || recipientTinType === "3" || recipientTinType === "4"
+              ? `${row?.["Recipient first name (if the recipient TIN is SSN, ATIN or ITIN)*"] || ""} ${row?.["Recipient last name (if the recipient TIN is SSN, ATIN or ITIN)*"] || ""}`.trim()
+              : row?.["Recipient name (if the recipient TIN is EIN or TIN not provided)*"] || "";
 
-            {/* CSV vs Application JSON mismatches */}
-            <h4>CSV vs Application JSON Mismatches</h4>
-            {csvAppIssues.length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Field</th>
-                    <th>CSV Value</th>
-                    <th>Application JSON Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvAppIssues.map((issue, j) => (
-                    <tr key={`csvapp-issue-${j}`}>
-                      <td>{issue.field}</td>
-                      <td>{String(issue.csv)}</td>
-                      <td>{String(issue.json)}</td>
+          return (
+            <div key={`combined-${returnId}-${i}`} className="result" style={{ marginBottom: "2rem" }}>
+              {rowNumber !== null && <p><strong>Row Number:</strong> {rowNumber}</p>}
+              <p><strong>Return ID:</strong> {returnId}</p>
+              <p><strong>Recipient Name:</strong> {recipientName || "N/A"}</p>
+
+              <h4>CSV vs Application JSON Mismatches</h4>
+              {csvAppIssues.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>CSV Value</th>
+                      <th>Application JSON Value</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : msg ? (
-              <p>{msg}</p>
-            ) : (
-              <p>No mismatches.</p>
-            )}
-
-            {/* Application JSON vs E-File JSON mismatches */}
-            {efileCompared && (
-              <>
-                <h4>Application JSON vs E-File JSON Mismatches</h4>
-                {appEfileIssues.length > 0 ? (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Field</th>
-                        <th>Application JSON Value</th>
-                        <th>E-File JSON Value</th>
+                  </thead>
+                  <tbody>
+                    {csvAppIssues.map((issue, j) => (
+                      <tr key={`csvapp-issue-${j}`}>
+                        <td>{issue.field}</td>
+                        <td>{String(issue.csv)}</td>
+                        <td>{String(issue.json)}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {appEfileIssues.map((issue, j) => (
-                        <tr key={`app-efile-issue-${j}`}>
-                          <td>{issue.field}</td>
-                          <td>{String(issue.appValue ?? '')}</td>
-                          <td>{String(issue.efileValue ?? '')}</td>
+                    ))}
+                  </tbody>
+                </table>
+              ) : msg ? (
+                <p>{msg}</p>
+              ) : (
+                <p>No mismatches.</p>
+              )}
+
+              {efileCompared && (
+                <>
+                  <h4>Application JSON vs E-File JSON Mismatches</h4>
+                  {appEfileIssues.length > 0 ? (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Field</th>
+                          <th>Application JSON Value</th>
+                          <th>E-File JSON Value</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : msg ? (
-                  <p>{msg}</p>
-                ) : (
-                  <p>No mismatches.</p>
-                )}
-              </>
-            )}
-          </div>
-        ))
+                      </thead>
+                      <tbody>
+                        {appEfileIssues.map((issue, j) => (
+                          <tr key={`app-efile-issue-${j}`}>
+                            <td>{issue.field}</td>
+                            <td>{String(issue.appValue ?? '')}</td>
+                            <td>{String(issue.efileValue ?? '')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : msg ? (
+                    <p>{msg}</p>
+                  ) : (
+                    <p>No mismatches.</p>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );

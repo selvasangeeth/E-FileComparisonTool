@@ -5,7 +5,7 @@ const multer = require('multer');
 const { compareCsvWithApi, compareApplicationWithEFile } = require('../Controller/comparison');
 const { generateJwt } = require('../Controller/generateJwt');
 
-const upload = multer({ storage: multer.memoryStorage() }); // You can also use diskStorage if you want to save to disk
+const upload = multer({ storage: multer.memoryStorage() }); 
 
 
 router.post('/compare/csv-json', upload.single('csvFile'), compareCsvWithApi);

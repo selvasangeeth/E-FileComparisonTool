@@ -18,6 +18,7 @@ const csvPayerEmail = "Payer email address";
 const csvPayerPhone = "Payer phone number";
 const csvGroupNames = "Group names";
 
+
 // Recipient Info
 const csvRecipientReferenceNumber = "Recipient reference number";
 const csvRecipientTypeOfTIN = "Recipient type of TIN (1=EIN 2=SSN 3=ITIN 4=ATIN 5=TIN not provided)*";

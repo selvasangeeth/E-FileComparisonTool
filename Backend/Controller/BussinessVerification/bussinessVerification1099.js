@@ -11,157 +11,57 @@ function compareBusinessWithJson(row, jsonData) {
     return str.replace(/^0+/, "").replace(/0+$/, "");
   }
 
-  if (normalize(business.businessnm) !== normalize(row[headers.csvPayerName])) {
-    issues.push({
-      field: "Payer Name",
-      csv: row[headers.csvPayerName],
-      json: business.businessnm
-    });
+  function compareFields(csvVal, jsonVal, fieldName) {
+    // console.log(`${fieldName}: CSV Value: ${csvVal}, JSON Value: ${jsonVal}`);
+    if (normalize(csvVal) !== normalize(jsonVal)) {
+      issues.push({
+        field: fieldName,
+        csv: csvVal || "",
+        json: jsonVal || ""
+      });
+    }
   }
 
-  if (normalize(business.firstNm) !== normalize(row[headers.csvPayerFirstName])) {
-    issues.push({
-      field: "Payer First Name",
-      csv: row[headers.csvPayerFirstName],
-      json: business.firstNm
-    });
-  }
+  const suffixMap = {
+    '1': 'Jr',
+    '2': 'Sr',
+    '3': 'I',
+    '4': 'II',
+    '5': 'III',
+    '6': 'IV',
+    '7': 'V',
+    '8': 'VI',
+    '9': 'VII'
+  };
 
-  if (normalize(business.middleNm) !== normalize(row[headers.csvPayerMiddleInitial])) {
-    issues.push({
-      field: "Payer Middle Initial",
-      csv: row[headers.csvPayerMiddleInitial],
-      json: business.middleNm
-    });
-  }
+  // Business Fields
+  compareFields(row[headers.csvPayerName], business.businessnm, "Payer Name");
+  compareFields(row[headers.csvPayerFirstName], business.firstNm, "Payer First Name");
+  compareFields(row[headers.csvPayerMiddleInitial], business.middleNm, "Payer Middle Initial");
+  compareFields(row[headers.csvPayerLastName], business.lastNm, "Payer Last Name");
 
-  if (normalize(business.lastNm) !== normalize(row[headers.csvPayerLastName])) {
-    issues.push({
-      field: "Payer Last Name",
-      csv: row[headers.csvPayerLastName],
-      json: business.lastNm
-    });
-  }
+  // logic for suffix
+  const csvSuffixCode = normalize(row[headers.csvPayerSuffix]);
+  const csvSuffix = suffixMap[csvSuffixCode] || csvSuffixCode;
+  compareFields(csvSuffix, business.suffix, "Payer Suffix");
 
-  if (normalize(business.suffix) !== normalize(row[headers.csvPayerSuffix])) {
-    issues.push({
-      field: "Payer Suffix",
-      csv: row[headers.csvPayerSuffix],
-      json: business.suffix
-    });
-  }
+  // Remaining fields
+  compareFields(row[headers.csvPayerDBA], business.tradenm, "Trade Name (DBA)");
+  compareFields(row[headers.csvPayerEmail], business.email, "Payer Email");
+  compareFields(row[headers.csvPayerPhone], business.phone, "Payer Phone");
+  // compareFields(row["Payer phone extension"], business.phoneextn, "Phone Extension");
+  // compareFields(row["Payer fax number"], business.fax, "Fax");
+  // compareFields(row["Payer business type"], business.businesstype, "Business Type");
+  // compareFields(row["Payer signing authority"], business.signingauthority, "Signing Authority");
+  // compareFields(row["Payer kind of employer"], business.kindofemployer, "Kind of Employer");
+  // compareFields(row["Payer kind of payer"], business.kindofpayer, "Kind of Payer");
 
-  if (normalize(business.tradenm) !== normalize(row[headers.csvPayerDBA])) {
-    issues.push({
-      field: "Trade Name (DBA)",
-      csv: row[headers.csvPayerDBA],
-      json: business.tradenm
-    });
-  }
-
-  if (normalize(business.email) !== normalize(row[headers.csvPayerEmail])) {
-    issues.push({
-      field: "Payer Email",
-      csv: row[headers.csvPayerEmail],
-      json: business.email
-    });
-  }
-
-  if (normalize(business.phone) !== normalize(row[headers.csvPayerPhone])) {
-    issues.push({
-      field: "Payer Phone",
-      csv: row[headers.csvPayerPhone],
-      json: business.phone
-    });
-  }
-
-  if (normalize(business.phoneextn) !== normalize(row["Payer phone extension"])) {
-    issues.push({
-      field: "Phone Extension",
-      csv: row["Payer phone extension"] || "",
-      json: business.phoneextn
-    });
-  }
-
-  if (normalize(business.fax) !== normalize(row["Payer fax number"])) {
-    issues.push({
-      field: "Fax",
-      csv: row["Payer fax number"] || "",
-      json: business.fax
-    });
-  }
-
-  if (normalize(business.businesstype) !== normalize(row["Payer business type"])) {
-    issues.push({
-      field: "Business Type",
-      csv: row["Payer business type"] || "",
-      json: business.businesstype
-    });
-  }
-
-  if (normalize(business.signingauthority) !== normalize(row["Payer signing authority"])) {
-    issues.push({
-      field: "Signing Authority",
-      csv: row["Payer signing authority"] || "",
-      json: business.signingauthority
-    });
-  }
-
-  if (normalize(business.kindofemployer) !== normalize(row["Payer kind of employer"])) {
-    issues.push({
-      field: "Kind of Employer",
-      csv: row["Payer kind of employer"] || "",
-      json: business.kindofemployer
-    });
-  }
-
-  if (normalize(business.kindofpayer) !== normalize(row["Payer kind of payer"])) {
-    issues.push({
-      field: "Kind of Payer",
-      csv: row["Payer kind of payer"] || "",
-      json: business.kindofpayer
-    });
-  }
-
-  if (normalize(address.address1) !== normalize(row[headers.csvPayerAddress1])) {
-    issues.push({
-      field: "Payer Address 1",
-      csv: row[headers.csvPayerAddress1],
-      json: address.address1
-    });
-  }
-
-  if (normalize(address.address2) !== normalize(row[headers.csvPayerAddress2])) {
-    issues.push({
-      field: "Payer Address 2",
-      csv: row[headers.csvPayerAddress2],
-      json: address.address2
-    });
-  }
-
-  if (normalize(address.city) !== normalize(row[headers.csvPayerCity])) {
-    issues.push({
-      field: "Payer City",
-      csv: row[headers.csvPayerCity],
-      json: address.city
-    });
-  }
-
-  if (normalize(address.state) !== normalize(row[headers.csvPayerState])) {
-    issues.push({
-      field: "Payer State",
-      csv: row[headers.csvPayerState],
-      json: address.state
-    });
-  }
-
-  if (normalize(address.zipcd) !== normalize(row[headers.csvPayerZip])) {
-    issues.push({
-      field: "Payer ZIP Code",
-      csv: row[headers.csvPayerZip],
-      json: address.zipcd
-    });
-  }
+  // Address Fields
+  compareFields(row[headers.csvPayerAddress1], address.address1, "Payer Address 1");
+  compareFields(row[headers.csvPayerAddress2], address.address2, "Payer Address 2");
+  compareFields(row[headers.csvPayerCity], address.city, "Payer City");
+  compareFields(row[headers.csvPayerState], address.state, "Payer State");
+  compareFields(row[headers.csvPayerZip], address.zipcd, "Payer ZIP Code");
 
   return issues;
 }
