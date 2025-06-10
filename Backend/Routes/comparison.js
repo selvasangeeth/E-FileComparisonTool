@@ -9,7 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 
 router.post('/compare/csv-json', upload.single('csvFile'), compareCsvWithApi);
-router.post('/api/generate-jwt',generateJwt );
+router.post('/generate-jwt',generateJwt );
 router.post('/compare/appjson-efilejson',compareApplicationWithEFile);
 
 

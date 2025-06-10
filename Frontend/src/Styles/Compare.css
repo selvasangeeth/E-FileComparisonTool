@@ -85,3 +85,21 @@ button:disabled {
   margin-top: 2rem;
   text-align: center;
 }
+
+input.form-control {
+  background-color: white;
+  color: black ;
+  border: 1px solid #ced4da;
+}
+.btn.generate-jwt-btn {
+  background-color: #d35400;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+.btn.generate-jwt-btn:hover {
+  background-color: #a84300;
+  color: white;
+
+}

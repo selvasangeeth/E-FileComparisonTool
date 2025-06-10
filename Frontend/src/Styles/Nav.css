@@ -1,0 +1,19 @@
+.logo {
+    height: 71px;
+    object-fit: contain;
+}
+
+.navbar.navbar-expand-lg.navbar-light.bg-white.px-3.shadow-sm {
+    height: 70px;
+    display: flex;
+    align-items: center;
+}
+
+.tooltitle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 600;
+    font-size: 20px;
+    user-select: none;
+}

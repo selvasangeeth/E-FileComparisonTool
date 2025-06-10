@@ -10,6 +10,7 @@ dotenv.config();
 const PORT = process.env.PORT;
 const ORIGIN_URL = process.env.ORIGIN_URL;
 
+
 app.use(cors({
   origin: ORIGIN_URL,
   credentials: true

@@ -64,7 +64,15 @@ const compareCsvWithApi = async (req, res) => {
       return res.status(400).json({ error: "CSV file is missing." });
     }
 
-    const csvData = await csv().fromString(csvFile.buffer.toString());
+    const rawCsvData = await csv().fromString(csvFile.buffer.toString());
+
+const csvData = rawCsvData.filter(row =>
+  Object.values(row).some(value => String(value).trim() !== '')
+);
+
+    
+    // console.log("CSV Data:", csvData);
+    console.log(csvData.length);
     const returnIdList = await getReturnIds(appOrderId, token);
     const mismatches = [];
 
@@ -94,22 +102,24 @@ const compareCsvWithApi = async (req, res) => {
         mismatches.push({
           rowNumber: i + 1,
           row,
-          jsonData: jsonData.returndata.recipient,
-          issue: "Recipient TIN is missing but other identifying recipient fields are present",
+          jsonData: "",
+          msg: "Recipient TIN is missing but other identifying recipient fields are present",
         });
         continue;
       }
 
       const csvTinLast4 = fullTin?.slice(-4);
+      // console.log("CSV TIN Last 4 Digits:", csvTinLast4);
 
       const matchedReturn = returnIdList.find(r => r.tin?.slice(-4) === csvTinLast4);
+      
 
       if (!matchedReturn) {
         mismatches.push({
           rowNumber: i + 1,
           row,
           issue: "",
-          jsonData: jsonData.returndata.recipient,
+          jsonData: "",
           msg: "No matching ReturnId found or Not Available in Application JSON"
         });
         continue;
